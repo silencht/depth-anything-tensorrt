@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(depth-anything-tensorrt-simplified)
+project(depth-anything-tensorrt)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -8,16 +8,16 @@ set(CMAKE_CXX_STANDARD 17)
 set(SOURCES
     main.cpp
     inference.cpp
-	utils.cpp
-	depth_anything.cpp
+    utils.cpp
+    depth_anything.cpp
     # ... add more source files here if needed
 )
 
 # Add headers
 set(HEADERS
     inference.h
-	utils.h
-	depth_anything.h
+    utils.h
+    depth_anything.h
     # ... add more header files here if needed
 )
 
@@ -26,12 +26,13 @@ find_package(CUDA REQUIRED)
 include_directories(${CUDA_INCLUDE_DIRS})
 
 # Find and include OpenCV
-set(OpenCV_DIR "D:\\opencv\\build")
-find_package(OpenCV REQUIRED)
+find_package(OpenCV 4.5.4 REQUIRED)
+MESSAGE("OPENCV VERSION:")
+MESSAGE(${OpenCV_VERSION})
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 # Set TensorRT path if not set in environment variables
-set(TENSORRT_DIR "D:\\0_dp\\library\\TensorRT-8.4.3.1")
+set(TENSORRT_DIR "/usr/local/TensorRT-8.6.1.6")
 
 # Include TensorRT
 include_directories(${TENSORRT_DIR}/include)

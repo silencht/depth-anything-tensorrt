@@ -5,8 +5,9 @@ import torch.onnx
 from depth_anything.dpt import DPT_DINOv2
 from depth_anything.util.transform import Resize, NormalizeImage, PrepareForNet
 
-encoder = 'vitb'
-load_from = './checkpoints/depth_anything_vitb14.pth'
+encoder = 'vits'
+#Download from https://huggingface.co/spaces/LiheYoung/Depth-Anything/tree/main/checkpoints
+load_from = './checkpoints/depth_anything_vits14.pth'
 image_shape = (3, 518, 518)
 
 # Initializing model
@@ -22,6 +23,8 @@ total_params = sum(param.numel() for param in depth_anything.parameters())
 print('Total parameters: {:.2f}M'.format(total_params / 1e6))
 
 # Loading model weight
+depth_anything = depth_anything.to('cuda')
+
 depth_anything.load_state_dict(torch.load(load_from, map_location='cpu'), strict=True)
 
 depth_anything.eval()
@@ -29,12 +32,15 @@ depth_anything.eval()
 # Define dummy input data
 dummy_input = torch.ones(image_shape).unsqueeze(0)
 
+dummy_input = dummy_input.to('cuda')
+
 # Provide an example input to the model, this is necessary for exporting to ONNX
 example_output = depth_anything(dummy_input)
 
 onnx_path = load_from.split('/')[-1].split('.pth')[0] + '.onnx'
 
 # Export the PyTorch model to ONNX format
+
 torch.onnx.export(depth_anything, dummy_input, onnx_path, opset_version=11, input_names=["input"], output_names=["output"], verbose=True)
 
 print(f"Model exported to {onnx_path}")

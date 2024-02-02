@@ -6,36 +6,28 @@
 #include "utils.h"
 #include "inference.h"
 #include "depth_anything.h"
-#ifdef _WIN32
-#include <windows.h>
-#else
 #include <sys/stat.h>
 #include <unistd.h>
-#endif
 
 using namespace std;
 
 bool IsPathExist(const std::string& path) {
-#ifdef _WIN32
-    DWORD fileAttributes = GetFileAttributesA(path.c_str());
-    return (fileAttributes != INVALID_FILE_ATTRIBUTES);
-#else
     return (access(path.c_str(), F_OK) == 0);
-#endif
 }
 bool IsFile(const std::string& path) {
     if (!IsPathExist(path)) {
         printf("%s:%d %s not exist\n", __FILE__, __LINE__, path.c_str());
         return false;
     }
-
-#ifdef _WIN32
-    DWORD fileAttributes = GetFileAttributesA(path.c_str());
-    return ((fileAttributes != INVALID_FILE_ATTRIBUTES) && ((fileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0));
-#else
     struct stat buffer;
     return (stat(path.c_str(), &buffer) == 0 && S_ISREG(buffer.st_mode));
-#endif
+}
+
+// 从文件名中提取数字
+int extractNumber(const std::string& s) {
+    size_t start = s.find("imL_") + 4;  // 找到 "imL_" 后面的位置
+    size_t end = s.find(".png", start);  // 找到 ".png" 的位置
+    return std::stoi(s.substr(start, end - start));
 }
 
 
@@ -77,7 +69,12 @@ int main(int argc, char** argv)
     }
     else if (IsPathExist(path)) 
     {
-        cv::glob(path + "/*.jpg", imagePathList);
+        std::cout<<"IsPathExist."<<std::endl;
+        cv::glob(path + "/imL*.png", imagePathList);
+        // 按照文件名中数字的顺序排序
+        std::sort(imagePathList.begin(), imagePathList.end(), [](const cv::String& a, const cv::String& b) {
+            return extractNumber(a) < extractNumber(b);
+        });
     }
     // Assume it's a folder, add logic to handle folders
     // init model
@@ -93,6 +90,7 @@ int main(int argc, char** argv)
         int height = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
 
         // Create a VideoWriter object to save the processed video
+        // std::cout<<"width is "<<width<<", height is "<<height<<std::endl;
         cv::VideoWriter output_video("output_video.avi", cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 30, cv::Size(width, height));
         while (1)
         {
@@ -109,13 +107,13 @@ int main(int argc, char** argv)
             cv::Mat result_d = inference(frame, depth_model);
             auto end = chrono::system_clock::now();
             cout << "Time of per frame: " << chrono::duration_cast<chrono::milliseconds>(end - start).count() << "ms" << endl;
-            addWeighted(show_frame, 0.7, result_d, 0.3, 0.0, show_frame);
+            // addWeighted(show_frame, 0.7, result_d, 0.3, 0.0, show_frame);
             cv::Mat result;
             cv::hconcat(result_d, show_frame, result);
-            cv::resize(result, result, cv::Size(1080, 720));
+            cv::resize(result, result, cv::Size(1280, 480));
             imshow("depth_result", result);
             output_video.write(result_d);
-            cv::waitKey(100);
+            cv::waitKey(1);
         }
 
         // Release resources
@@ -130,24 +128,26 @@ int main(int argc, char** argv)
         {
             // open image
             cv::Mat frame = cv::imread(imagePath);
+            // std::cout<<"width is "<<frame.cols<<", height is "<<frame.rows<<std::endl;
             if (frame.empty())
             {
                 cerr << "Error reading image: " << imagePath << endl;
                 continue;
             }
             cv::Mat show_frame;
-            frame.copyTo(show_frame);
+            show_frame = frame.clone();
+            // frame.copyTo(show_frame);
 
             auto start = chrono::system_clock::now();
             cv::Mat result_d = inference(frame, depth_model);
             auto end = chrono::system_clock::now();
             cout << "Time of per frame: " << chrono::duration_cast<chrono::milliseconds>(end - start).count() << "ms" << endl;
-            addWeighted(show_frame, 0.7, result_d, 0.3, 0.0, show_frame);
+            // addWeighted(show_frame, 0.7, result_d, 0.3, 0.0, show_frame);
             cv::Mat result;
             cv::hconcat(result_d, show_frame, result);
-            cv::resize(result, result, cv::Size(1080, 720));
+            cv::resize(result, result, cv::Size(1280, 480));
             imshow("depth_result", result);
-            cv::waitKey(100);
+            cv::waitKey(1);
 
             std::istringstream iss(imagePath);
             std::string token;
