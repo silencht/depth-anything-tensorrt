@@ -25,6 +25,10 @@ set(HEADERS
 find_package(CUDA REQUIRED)
 include_directories(${CUDA_INCLUDE_DIRS})
 
+# Find and include Eigen
+find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
+
 # Find and include OpenCV
 find_package(OpenCV 4.5.4 REQUIRED)
 MESSAGE("OPENCV VERSION:")
@@ -35,7 +39,7 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 set(TENSORRT_DIR "/usr/local/TensorRT-8.6.1.6")
 
 # Include TensorRT
-include_directories(${TENSORRT_DIR}/include)
+include_directories(${TENSORRT_DIR}/include )
 link_directories(${TENSORRT_DIR}/lib)
 set(TENSORRT_LIBS nvinfer nvinfer_plugin nvparsers nvonnxparser)
 
@@ -47,4 +51,5 @@ target_link_libraries(${PROJECT_NAME}
     ${OpenCV_LIBS}
     ${CUDA_LIBRARIES}
     ${TENSORRT_LIBS}
+    ${EIGEN3_LIBS}
 )
